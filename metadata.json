@@ -1,0 +1,6 @@
+{
+  "name": "BlackBox Earn",
+  "description": "Advanced ad network management dashboard with real-time revenue analytics, waterfall mediation optimization, and eCPM tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

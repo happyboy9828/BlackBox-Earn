@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">BlackBox Earn</string>
+    <string name="tab_overview">Overview</string>
+    <string name="tab_networks">Networks</string>
+    <string name="tab_ad_units">Ad Units</string>
+    <string name="tab_mediation">Mediation</string>
+    <string name="tab_payouts">Payouts</string>
+
+    <string name="title_dashboard">Executive Dashboard</string>
+    <string name="title_networks">Connected Ad Networks</string>
+    <string name="title_ad_units">Inventory &amp; Ad Units</string>
+    <string name="title_waterfall">BlackBox Mediation Engine</string>
+    <string name="title_payouts">Consolidated Earnings &amp; Payouts</string>
+
+    <string name="metric_today_est">Today\'s Estimated</string>
+    <string name="metric_yesterday">Yesterday</string>
+    <string name="metric_month">This Month</string>
+    <string name="metric_ecpm">Avg eCPM</string>
+    <string name="metric_impressions">Impressions</string>
+    <string name="metric_fill_rate">Fill Rate</string>
+    <string name="metric_active_nets">Active Networks</string>
+
+    <string name="action_sync">Sync Data</string>
+    <string name="action_optimize">Optimize Waterfall</string>
+    <string name="action_add_network">Add Network</string>
+    <string name="action_add_unit">Add Ad Unit</string>
+    <string name="action_request_payout">Request Payout</string>
+    <string name="action_save">Save Changes</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+
+    <string name="filter_all">All</string>
+    <string name="filter_today">Today</string>
+    <string name="filter_7d">Last 7D</string>
+    <string name="filter_30d">Last 30D</string>
+
+    <string name="status_connected">Connected</string>
+    <string name="status_degraded">Degraded</string>
+    <string name="status_inactive">Inactive</string>
+</resources>
