@@ -52,6 +52,10 @@ class SecureStorageManager(context: Context) {
         }
     }
 
+    fun hasAnyToken(): Boolean {
+        return getAdsterraToken().isNotBlank() || getMonetagToken().isNotBlank() || getVercelToken().isNotBlank()
+    }
+
     fun getAdsterraToken(): String {
         return sharedPreferences.getString(KEY_ADSTERRA_TOKEN, "") ?: ""
     }

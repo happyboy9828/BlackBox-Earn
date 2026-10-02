@@ -54,10 +54,10 @@ class MainActivity : FragmentActivity() {
                 ) {
                     PubDashApp(
                         viewModel = viewModel,
-                        onRequestBiometricPrompt = {
+                        onRequestBiometricPrompt = { onAuthSuccess ->
                             showBiometricPrompt(
                                 onSuccess = {
-                                    viewModel.unlockWithBiometrics()
+                                    onAuthSuccess()
                                 },
                                 onError = { msg ->
                                     Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
@@ -71,6 +71,8 @@ class MainActivity : FragmentActivity() {
     }
 
     fun showBiometricPrompt(
+        title: String = "BlackBox Earn Security",
+        subtitle: String = "Touch fingerprint sensor to unlock",
         onSuccess: () -> Unit,
         onError: (String) -> Unit = {}
     ) {
@@ -105,8 +107,8 @@ class MainActivity : FragmentActivity() {
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("BlackBox Earn Security")
-            .setSubtitle("Touch fingerprint sensor to unlock")
+            .setTitle(title)
+            .setSubtitle(subtitle)
             .setNegativeButtonText("Use PIN")
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK)
             .build()
@@ -124,7 +126,7 @@ class MainActivity : FragmentActivity() {
         if (lastPauseTime > 0L) {
             val elapsed = System.currentTimeMillis() - lastPauseTime
             val timeout = pinManager.getLockTimeout()
-            if (elapsed > timeout) {
+            if (elapsed >= timeout) {
                 currentViewModel?.lockApp()
                 if (pinManager.isBiometricEnabled()) {
                     showBiometricPrompt(onSuccess = { currentViewModel?.unlockWithBiometrics() })

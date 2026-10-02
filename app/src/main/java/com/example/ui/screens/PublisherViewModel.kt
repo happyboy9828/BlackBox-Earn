@@ -285,6 +285,14 @@ class PublisherViewModel(
         return success
     }
 
+    fun unlockVaultWithBiometrics() {
+        _isVaultUnlocked.value = true
+    }
+
+    fun unlockVaultDirect() {
+        _isVaultUnlocked.value = true
+    }
+
     fun lockVault() {
         _isVaultUnlocked.value = false
     }
@@ -303,7 +311,15 @@ class PublisherViewModel(
             monetagStatus = secureStorage.getMonetagStatus(),
             vercelStatus = secureStorage.getVercelStatus()
         )
-        refreshPublisherData()
+        // If any token is set, wipe dummy seed data so only real API data displays
+        if (adsterra.isNotBlank() || monetag.isNotBlank() || vercel.isNotBlank()) {
+            viewModelScope.launch {
+                repository.clearCache()
+                refreshPublisherData()
+            }
+        } else {
+            refreshPublisherData()
+        }
     }
 
     fun testAdsterraToken(token: String) {

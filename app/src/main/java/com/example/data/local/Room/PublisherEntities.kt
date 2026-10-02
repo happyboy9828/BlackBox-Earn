@@ -104,7 +104,7 @@ abstract class PublisherDatabase : RoomDatabase() {
                     PublisherDatabase::class.java,
                     "publisher_earnings_db"
                 )
-                    .addCallback(PublisherDatabaseCallback(scope))
+                    .addCallback(PublisherDatabaseCallback(context.applicationContext, scope))
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
@@ -114,6 +114,7 @@ abstract class PublisherDatabase : RoomDatabase() {
     }
 
     private class PublisherDatabaseCallback(
+        private val context: Context,
         private val scope: CoroutineScope
     ) : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
@@ -126,6 +127,11 @@ abstract class PublisherDatabase : RoomDatabase() {
         }
 
         suspend fun populateInitialCache(dao: PublisherDao) {
+            // Do NOT populate dummy data if any token is configured
+            val secureStorage = com.example.data.security.SecureStorageManager(context)
+            if (secureStorage.hasAnyToken()) {
+                return
+            }
             val stats = listOf(
                 // Adsterra historical cache (last 7 days)
                 PublisherStatEntity(date = "2026-09-24", network = "ADSTERRA", domain = "techpulse.io", impressions = 42100, clicks = 890, revenue = 210.50, cpm = 5.00),

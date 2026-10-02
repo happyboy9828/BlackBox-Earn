@@ -37,7 +37,7 @@ class PinManager(private val context: Context) {
         private const val KEY_FAILED_ATTEMPTS = "app_lock_failed_attempts"
         private const val KEY_LOCKOUT_UNTIL = "app_lock_lockout_until"
 
-        const val DEFAULT_TIMEOUT_MS = 60_000L // 1 minute
+        const val DEFAULT_TIMEOUT_MS = 0L // Immediately after app closed
         const val MAX_FAILED_ATTEMPTS = 3
         const val LOCKOUT_DURATION_MS = 60_000L // 60 seconds
     }

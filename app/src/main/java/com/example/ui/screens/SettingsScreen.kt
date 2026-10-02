@@ -209,14 +209,13 @@ fun SettingsScreen(
 
                     // Lock Timeout
                     val timeoutText = when (lockTimeoutMs) {
-                        30_000L -> "30 seconds"
-                        60_000L -> "1 minute"
-                        300_000L -> "5 minutes"
-                        else -> "Immediate"
+                        120_000L -> "2 minutes after app closed"
+                        300_000L -> "5 minutes after app closed"
+                        else -> "Immediately after app closed"
                     }
                     SettingsActionRow(
-                        title = "Auto-Lock Timeout",
-                        subtitle = "Lock after inactivity: $timeoutText",
+                        title = "Auto-Lock Timer",
+                        subtitle = "Lock timer: $timeoutText",
                         icon = Icons.Default.Timer,
                         onClick = { showTimeoutDialog = true }
                     )
@@ -345,10 +344,9 @@ fun SettingsScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     val timeouts = listOf(
-                        Pair(0L, "Immediate"),
-                        Pair(30_000L, "30 Seconds"),
-                        Pair(60_000L, "1 Minute"),
-                        Pair(300_000L, "5 Minutes")
+                        Pair(0L, "Immediately after app closed"),
+                        Pair(120_000L, "2 Minutes after app closed"),
+                        Pair(300_000L, "5 Minutes after app closed")
                     )
                     timeouts.forEach { (time, label) ->
                         Surface(

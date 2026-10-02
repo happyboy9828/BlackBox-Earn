@@ -2,6 +2,7 @@ package com.example.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
@@ -44,6 +46,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -89,7 +92,7 @@ data class NavTab(
 @Composable
 fun PubDashApp(
     viewModel: PublisherViewModel,
-    onRequestBiometricPrompt: (() -> Unit)? = null
+    onRequestBiometricPrompt: ((onSuccess: () -> Unit) -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var currentTabIndex by remember { mutableIntStateOf(0) }
@@ -110,7 +113,9 @@ fun PubDashApp(
                 },
                 onBiometricUnlock = {
                     if (onRequestBiometricPrompt != null) {
-                        onRequestBiometricPrompt()
+                        onRequestBiometricPrompt {
+                            viewModel.unlockWithBiometrics()
+                        }
                     } else {
                         viewModel.unlockWithBiometrics()
                     }
@@ -324,7 +329,7 @@ fun PubDashApp(
         }
     }
 
-    // Vault PIN authentication dialog (Second Layer Security)
+    // Vault PIN / Biometric authentication dialog (Second Layer Security)
     if (showVaultPinDialog) {
         VaultAuthDialog(
             onDismiss = { showVaultPinDialog = false },
@@ -334,7 +339,19 @@ fun PubDashApp(
                     showVaultPinDialog = false
                 }
                 ok
-            }
+            },
+            onBiometricUnlock = {
+                if (onRequestBiometricPrompt != null) {
+                    onRequestBiometricPrompt {
+                        viewModel.unlockVaultWithBiometrics()
+                        showVaultPinDialog = false
+                    }
+                } else {
+                    viewModel.unlockVaultWithBiometrics()
+                    showVaultPinDialog = false
+                }
+            },
+            isBiometricAvailable = uiState.isBiometricAvailable && uiState.isBiometricEnabled
         )
     }
 }
@@ -342,27 +359,65 @@ fun PubDashApp(
 @Composable
 fun VaultAuthDialog(
     onDismiss: () -> Unit,
-    onConfirmPin: (String) -> Boolean
+    onConfirmPin: (String) -> Boolean,
+    onBiometricUnlock: (() -> Unit)? = null,
+    isBiometricAvailable: Boolean = false
 ) {
     var pin by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf<String?>(null) }
+
+    // Automatically trigger biometric fingerprint popup when dialog opens if available
+    LaunchedEffect(isBiometricAvailable) {
+        if (isBiometricAvailable && onBiometricUnlock != null) {
+            onBiometricUnlock()
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = BlackBoxSurface,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.Lock, contentDescription = null, tint = BlackBoxEmeraldLight, modifier = Modifier.size(20.dp))
-                Text("Enter PIN to unlock Vault", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Icon(Icons.Default.Shield, contentDescription = null, tint = BlackBoxEmeraldLight, modifier = Modifier.size(22.dp))
+                Column {
+                    Text("Unlock Secure API Vault", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Biometric Fingerprint or PIN required", fontSize = 10.sp, color = BlackBoxEmeraldLight)
+                }
             }
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Second-layer authentication required to view or edit Adsterra and Monetag API tokens.",
-                    fontSize = 12.sp,
-                    color = TextSecondary
+                    "Second-layer authentication required to view, edit, or copy your Adsterra, Monetag, and Vercel API credentials.",
+                    fontSize = 11.sp,
+                    color = TextSecondary,
+                    lineHeight = 15.sp
                 )
+
+                if (isBiometricAvailable && onBiometricUnlock != null) {
+                    Button(
+                        onClick = onBiometricUnlock,
+                        colors = ButtonDefaults.buttonColors(containerColor = BlackBoxEmerald.copy(alpha = 0.2f)),
+                        border = BorderStroke(1.dp, BlackBoxEmerald),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(46.dp)
+                            .testTag("btn_vault_biometric_unlock")
+                    ) {
+                        Icon(Icons.Default.Fingerprint, contentDescription = null, tint = BlackBoxEmeraldLight, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Touch Fingerprint to Unlock", color = BlackBoxEmeraldLight, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text("— OR ENTER 6-DIGIT PIN —", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = TextMuted, letterSpacing = 1.sp)
+                    }
+                }
 
                 OutlinedTextField(
                     value = pin,
@@ -399,7 +454,7 @@ fun VaultAuthDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = BlackBoxEmerald),
                 modifier = Modifier.testTag("btn_confirm_vault_pin")
             ) {
-                Text("Unlock Vault", color = Color(0xFF070B12), fontWeight = FontWeight.Bold)
+                Text("Unlock With PIN", color = Color(0xFF070B12), fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

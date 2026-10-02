@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
@@ -41,13 +42,17 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -82,6 +87,32 @@ import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import java.util.Locale
 
+@Composable
+fun StatusBadge(status: TokenStatus) {
+    val (color, text, icon) = when (status) {
+        TokenStatus.ACTIVE -> Triple(BlackBoxEmeraldLight, "Active", Icons.Default.CheckCircle)
+        TokenStatus.INVALID -> Triple(BlackBoxRose, "Invalid", Icons.Default.Error)
+        TokenStatus.CHECKING -> Triple(BlackBoxCyan, "Checking", Icons.Default.Refresh)
+        TokenStatus.NOT_SET -> Triple(TextMuted, "Not Set", Icons.Default.HelpOutline)
+    }
+
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = color.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.35f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
+            Text(text = text, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = color)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VaultScreen(
     adsterraToken: String,
@@ -125,68 +156,132 @@ fun VaultScreen(
     var showVercelToken by remember { mutableStateOf(false) }
     var saveSuccessMsg by remember { mutableStateOf(false) }
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(BlackBoxBg)
-            .padding(16.dp)
-            .testTag("vault_screen"),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Vault Header
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(BlackBoxEmerald.copy(alpha = 0.2f), RoundedCornerShape(10.dp)),
-                        contentAlignment = Alignment.Center
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = BlackBoxBg,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(BlackBoxEmerald.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shield,
+                                contentDescription = null,
+                                tint = BlackBoxEmeraldLight,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Secure API Vault",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Black,
+                                color = TextPrimary,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = "Hardware Encrypted • Zero-Trust",
+                                fontSize = 10.sp,
+                                color = BlackBoxEmeraldLight,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = onLockVault,
+                        modifier = Modifier.testTag("vault_back_button")
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Shield,
-                            contentDescription = null,
-                            tint = BlackBoxEmeraldLight,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = TextPrimary
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = onLockVault,
+                        modifier = Modifier.testTag("btn_lock_vault")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Lock Vault",
+                            tint = BlackBoxRose,
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    Column {
-                        Text(
-                            text = "SECURE API VAULT",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BlackBoxEmeraldLight,
-                            letterSpacing = 1.sp
-                        )
-                        Text(
-                            text = "Publisher API Keys",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = BlackBoxSurface,
+                    titleContentColor = TextPrimary,
+                    navigationIconContentColor = TextPrimary,
+                    actionIconContentColor = TextPrimary
+                )
+            )
+        }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp)
+                .testTag("vault_screen"),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // 0. Prominent Secure API Vault Header Banner
+            item {
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = BlackBoxSurfaceVariant,
+                    border = BorderStroke(1.dp, BlackBoxEmerald.copy(alpha = 0.5f)),
+                    modifier = Modifier.fillMaxWidth().testTag("vault_header_card")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(46.dp)
+                                .background(BlackBoxEmerald.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shield,
+                                contentDescription = null,
+                                tint = BlackBoxEmeraldLight,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "SECURE API VAULT",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Black,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Biometric & Hardware Protected Credentials",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = BlackBoxEmeraldLight
+                            )
+                        }
                     }
                 }
-
-                Button(
-                    onClick = onLockVault,
-                    colors = ButtonDefaults.buttonColors(containerColor = BlackBoxSurfaceVariant),
-                    shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                    modifier = Modifier.testTag("btn_lock_vault")
-                ) {
-                    Icon(imageVector = Icons.Default.Lock, contentDescription = "Lock", tint = TextSecondary, modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Lock Vault", fontSize = 11.sp, color = TextSecondary)
-                }
             }
-        }
 
         // Encryption Banner
         item {
@@ -651,28 +746,4 @@ fun VaultScreen(
         }
     }
 }
-
-@Composable
-fun StatusBadge(status: TokenStatus) {
-    val (color, text, icon) = when (status) {
-        TokenStatus.ACTIVE -> Triple(BlackBoxEmeraldLight, "Active", Icons.Default.CheckCircle)
-        TokenStatus.INVALID -> Triple(BlackBoxRose, "Invalid", Icons.Default.Error)
-        TokenStatus.CHECKING -> Triple(BlackBoxCyan, "Checking", Icons.Default.Refresh)
-        TokenStatus.NOT_SET -> Triple(TextMuted, "Not Set", Icons.Default.HelpOutline)
-    }
-
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = color.copy(alpha = 0.12f),
-        border = BorderStroke(1.dp, color.copy(alpha = 0.35f))
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
-            Text(text = text, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = color)
-        }
-    }
 }

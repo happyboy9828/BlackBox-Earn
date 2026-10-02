@@ -28,10 +28,23 @@ class PublisherRepository(
 ) {
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
-    val allStats: Flow<List<PublisherStatEntity>> = dao.getAllStats()
+    private val dummyDomains = setOf("techpulse.io", "viralbuzz.co", "gamershub.net", "cryptonews.io")
+
+    val allStats: Flow<List<PublisherStatEntity>> = dao.getAllStats().map { stats ->
+        if (secureStorage.hasAnyToken()) {
+            stats.filterNot { it.domain in dummyDomains }
+        } else {
+            stats
+        }
+    }
 
     val connectedDomains: Flow<List<DomainOverviewModel>> = dao.getAllConnectedDomains().map { list ->
-        list.map { entity ->
+        val filteredList = if (secureStorage.hasAnyToken()) {
+            list.filterNot { it.domain in dummyDomains }
+        } else {
+            list
+        }
+        filteredList.map { entity ->
             val systems = entity.connectedSystems.split(",").filter { it.isNotBlank() }
             val totRev = entity.adsterraRevenue + entity.monetagRevenue
             val totImps = entity.adsterraImpressions + entity.monetagImpressions
@@ -321,6 +334,12 @@ class PublisherRepository(
             resultsList.add("Vercel: token not set")
         }
 
+        // If any token is connected, wipe out any dummy/seed data before inserting real API records
+        if (secureStorage.hasAnyToken()) {
+            dao.clearAllStats()
+            dao.clearConnectedDomains()
+        }
+
         if (entitiesToInsert.isNotEmpty()) {
             dao.insertStats(entitiesToInsert)
         }
@@ -383,6 +402,7 @@ class PublisherRepository(
 
     suspend fun clearCache() = withContext(Dispatchers.IO) {
         dao.clearAllStats()
+        dao.clearConnectedDomains()
     }
 
     suspend fun generateCsv(): String = withContext(Dispatchers.IO) {
